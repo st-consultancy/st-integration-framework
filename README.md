@@ -18,9 +18,11 @@ Actual configuration and supported behavior depend on the included artifacts and
 ## Architecture
 A typical asynchronous integration follows this pattern:
 
-![Integration Architecutre](docs/images/ST_IntegrationArchitecture.png)
+![Asynchronous Integration Architecutre](docs/images/ST_IntegrationArchitecture_async.png)
 
-For synchronous interfaces, sender and receiver iFlows can communicate directly through ProcessDirect.
+For synchronous interfaces, sender and receiver iFlows communicate directly through ProcessDirect.
+
+![Asynchronous Integration Architecutre](docs/images/ST_IntegrationArchitecture_sync.png)
 
 ## Download and installation
 1. Open the repository's [Releases](../../releases) page.

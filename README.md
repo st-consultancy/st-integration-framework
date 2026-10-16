@@ -2,90 +2,27 @@
 
 **Standardized by Design. Reliable by Default.**
 
-ST Integration Framework is an open-source collection of reusable integration patterns, Groovy scripts, and SAP Cloud Integration artifacts developed by **ST Consultancy B.V.**
+ST Integration Framework is an open-source collection of reusable SAP Cloud Integration integration flows and Groovy utilities developed and maintained by **ST Consultancy B.V.** It provides reusable patterns for consistent message processing, routing, exception handling, and integration operations.
 
-The framework helps SAP integration developers build reliable, maintainable, and consistent integrations while reducing repetitive development effort.
+The framework is distributed as an **import-ready SAP Cloud Integration package**. Its iFlows and embedded Groovy scripts are included in the package ZIP and can be inspected and adapted in SAP Cloud Integration. The repository does not maintain separate copies of these artifacts.
 
-It provides reusable capabilities for asynchronous message processing, centralized routing, error handling, automatic retries, and message recovery.
+## Capabilities
 
-## Key Features
+- **Standardized processing:** Patterns for synchronous ProcessDirect and asynchronous JMS-based integrations.
+- **Reusable routing:** Shared router iFlows for dispatching messages to interface-specific receiver flows.
+- **Sender exception handling:** Standardized diagnostics and recovery approaches for HTTP and IDoc senders.
+- **Receiver error handling:** Error classification, configurable retries, failed-message persistence, and recovery.
+- **Notification/event collection:** Patterns for collecting and consolidating business-object change notifications.
+- **Reusable scripts:** Groovy utilities packaged with the integration artifacts.
 
-### 1. Standardized Message Processing
-
-Reusable integration patterns for synchronous and asynchronous interfaces, including:
-
-- HTTP, IDoc, RFC, and OData integration scenarios
-- JMS-based asynchronous processing
-- ProcessDirect communication between integration flows
-- Standardized message headers and properties
-- Separation of sender, router, and receiver processing
-
-### 2. Centralized Routing
-
-Reusable global router iFlows provide standardized message dispatching and exception handling.
-
-Key capabilities include:
-
-- JMS message consumption
-- Dynamic routing to receiver iFlows
-- Configurable automatic retry handling
-- Centralized processing of receiver exceptions
-- Error Data Store integration
-
-### 3. Sender Exception Handling
-
-Standardized exception handling for sender integration flows.
-
-Capabilities include:
-
-- Capturing sender-side processing failures
-- Recording diagnostic information in Message Processing Logs
-- Persisting failed requests to an exception Data Store where applicable
-- Returning structured error responses to HTTP sender applications
-- Supporting message recovery using the original request
-
-### 4. Receiver Error Handling
-
-Reusable error handling for receiver integration flows.
-
-Capabilities include:
-
-- Functional and technical error classification
-- Configurable retryable error codes
-- Automatic retry control
-- Timeout handling
-- Failed-message persistence
-- Diagnostic information collection
-
-### 5. Idempotency and Duplicate Prevention
-
-Reusable patterns for protecting backend systems against duplicate processing.
-
-Capabilities include:
-
-- SAP Cloud Integration Idempotent Process Call
-- Request identifiers preserved across retries
-- OData V4 repeatability headers where supported
-- Duplicate detection and error classification
-
-### 6. Monitoring and Troubleshooting
-
-Standardized monitoring information to simplify troubleshooting.
-
-Capabilities include:
-
-- Application Message ID and Message Type
-- Custom Message Processing Log statuses
-- Custom headers containing error information
-- Data Store references for message recovery
-- Diagnostic payload and exception details
+Actual configuration and supported behavior depend on the included artifacts and the connected systems.
 
 ## Architecture
 
-The framework separates integration responsibilities into reusable components.
+A typical asynchronous integration follows this pattern:
 
 ```text
-Sender System
+Source System
      |
      v
 Sender iFlow
@@ -100,102 +37,56 @@ Global Router iFlow
 Receiver iFlow
      |
      v
-Receiver System
+Target System
 ```
 
-For synchronous scenarios, sender and receiver iFlows can communicate directly through ProcessDirect without using JMS.
+For synchronous interfaces, sender and receiver iFlows can communicate directly through ProcessDirect.
 
-## Framework Components
+## Download and installation
 
-| Component | Description |
-|---|---|
-| ST_Collector_Events | Event collection and consolidation |
-| ST_Router_Incoming | Global incoming message routing |
-| ST_Router_SAPS4H | Routing and processing for SAP S/4HANA |
-| ST_Accelerator_Scripts | Reusable Groovy scripts and utilities |
+1. Open the repository's [Releases](../../releases) page.
+2. Download `ST_Integration_Accelerators.zip` from the desired release.
+3. In SAP Cloud Integration, import the package using the available package import functionality.
+4. Review the imported artifacts and configure required endpoints, credentials, queues, parameters, and authorizations for your landscape.
+5. Deploy only the components required for your scenario and test them before production use.
 
-## Example Integration Scenarios
+> **Note:** The downloadable ZIP is the authoritative distribution of the iFlows and Groovy scripts. There is no separate `scripts/` or `src/` directory in this repository. Release availability and contents are documented on the Releases page.
 
-The repository includes demonstration integration packages illustrating how to apply the framework.
+## Documentation
 
-| Package | Description |
-|---|---|
-| PI0001 - BusinessPartnerCreate | Synchronous HTTP-to-OData V2 integration |
-| PI0002 - BusinessPartnerCreated | Business Partner to Flight Customer integration |
-| PI0003 - FlightCustomerChange | Asynchronous HTTP-to-RFC integration with error handling |
-| PI0004 - FlightCustomerEvent | Event-driven integration using SAP Event Mesh |
-| PI0005 - FLIGHTCUSTOMER_CHANGE | Asynchronous IDoc-to-OData V4 integration with idempotency |
-
-These examples demonstrate reusable patterns and are intended for learning, testing, and adaptation.
-
-## Getting Started
-
-### Prerequisites
-
-- SAP Integration Suite with Cloud Integration capability
-- Access to an SAP BTP subaccount
-- Appropriate authorizations to deploy and configure integration artifacts
-- SAP backend systems or equivalent test endpoints for the selected demonstration scenario
-
-Additional services, such as JMS and SAP Event Mesh, may be required depending on the integration pattern.
-
-### Installation
-
-1. Download or clone the repository.
-2. Import the required integration packages into SAP Cloud Integration.
-3. Configure the relevant externalized parameters, destinations, credentials, and endpoints.
-4. Deploy the shared framework artifacts.
-5. Import and configure a demonstration scenario.
-6. Deploy the integration flows and execute the test cases.
-
-Refer to the documentation for each package for configuration details.
+- [Naming Convention](docs/Naming_Convention.md)
+- [Sender Exception Handling](docs/Sender_Exception_Handling.md)
+- [Receiver Error Handling](docs/Receiver_Error_Handling.md)
+- [Notification Event Collector](docs/Notification_Event_Collector.md)
 
 ## ST Integration Toolkit
 
-ST Integration Framework can be used independently.
+The **ST Integration Toolkit** is a separate commercial offering that complements the open-source framework with operational applications, including:
 
-For organizations requiring additional operational capabilities, ST Consultancy B.V. also offers the commercial **ST Integration Toolkit**.
+- **Error Handling App:** Investigate, retry, and resubmit failed messages.
+- **Audit Logging App:** Track error-handling and recovery activities.
+- **iFlow Testing App:** Execute integration tests and compare expected and actual results.
 
-The Toolkit provides applications and utilities such as:
-
-- **Error Handling App:** Monitor, correct, retry, and resubmit failed integration messages.
-- **Audit Logging App:** Track error-handling and message-recovery activities.
-- **iFlow Testing App:** Execute integration tests and compare actual results with expected results.
-
-The ST Integration Toolkit is a separate commercial offering and is not covered by the open-source license of this repository.
+The Toolkit is **not included** in the open-source package or covered by this repository's license.
 
 ## License
 
-ST Integration Framework is licensed under the **Apache License, Version 2.0**.
-
-See [LICENSE](LICENSE) for details.
+Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE) for project attribution and notices.
 
 Copyright 2026 ST Consultancy B.V.
 
-## Contributing
+## Feedback and maintenance
 
-Contributions, bug reports, and suggestions are welcome.
-
-Please use GitHub Issues to report defects or propose improvements.
-
-For code contributions, refer to [CONTRIBUTING.md](CONTRIBUTING.md).
+ST Integration Framework is developed and maintained by ST Consultancy B.V. Bug reports and feature suggestions are welcome through GitHub Issues. External code contributions and pull requests are not currently accepted.
 
 ## Disclaimer
 
-This project is provided on an "AS IS" basis, without warranties or conditions of any kind, as described in the Apache License 2.0.
-
-ST Integration Framework is an independent project developed by ST Consultancy B.V. and is not an official SAP product.
-
-SAP product names and trademarks belong to their respective owners.
+This is an independent project and is not an official SAP product or endorsed by SAP SE. SAP product names and trademarks belong to their respective owners. The software is provided **AS IS**, without warranties or conditions of any kind, as described in the Apache License 2.0.
 
 ## About ST Consultancy B.V.
 
-ST Consultancy B.V. is an SAP consulting company specializing in SAP Integration and SAP Business Technology Platform (BTP).
+ST Consultancy B.V. specializes in SAP Integration and SAP Business Technology Platform (BTP), including SAP Cloud Integration, API Management, Event Mesh, and BTP application development.
 
-Our expertise includes SAP Cloud Integration, API Management, Event Mesh, SAP BTP application development, and integration architecture.
-
-**Website:** https://st-consultancy.com
-
-**Email:** info@st-consultancy.com
-
-**LinkedIn:** https://linkedin.com/company/st-consultancy88
+- **Website:** https://st-consultancy.com
+- **Email:** info@st-consultancy.com
+- **LinkedIn:** https://linkedin.com/company/st-consultancy88

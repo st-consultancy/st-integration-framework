@@ -40,12 +40,17 @@ For synchronous interfaces, sender and receiver iFlows communicate directly thro
 - [Notification Event Collector](docs/Notification_Event_Collector.md)
 
 ## ST Integration Toolkit
-The **ST Integration Toolkit** is a separate commercial offering that complements the open-source framework with operational applications, including:
-- **Error Handling App:** Investigate, retry, and resubmit failed messages.
-- **Audit Logging App:** Track error-handling and recovery activities.
-- **iFlow Testing App:** Execute integration tests and compare expected and actual results.
+The **ST Integration Toolkit** is a separate commercial offering developed by ST Consultancy B.V. that complements the open-source ST Integration Framework with advanced operational, testing, and AI-powered troubleshooting capabilities.
 
-The Toolkit is **not included** in the open-source package or covered by this repository's license.
+The Toolkit includes:
+- **Error Handling App:** Investigate, correct, retry, and resubmit failed messages.
+- **Audit Logging App:** Track error-handling activities, message recovery operations, and payload changes for traceability and auditing.
+- **iFlow Testing App:** Execute integration tests, validate message transformations, and compare actual results against expected results.
+- **AI Log Analyzer App:** Analyze sender exceptions and receiver errors using AI, identify potential root causes, and recommend corrective actions.
+
+The Toolkit helps integration teams reduce troubleshooting effort, improve operational efficiency, and maintain greater visibility and control over their SAP Cloud Integration landscape.
+
+**Note:** ST Integration Toolkit is a proprietary commercial product and is not included in the Apache License 2.0 distribution of ST Integration Framework.
 
 ## License
 Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE) for project attribution and notices.

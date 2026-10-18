@@ -289,23 +289,15 @@ Refer to the individual iFlow configurations for the required endpoint addresses
 The following test scenarios demonstrate the main capabilities of the ST Integration Framework, including synchronous and asynchronous processing, standardized exception handling, automatic retry, and manual message recovery.
 
 ### Test Scenarios
-\| Test Scenario | Expected Behavior | How to Test |
-
-\|---|---|---|
-
-\| **1. Create a customer successfully** | The Flight Customer is created in SAP, and the processing result is returned synchronously to the HTTP client. | Submit a customer creation request with valid data, such as `CountryCode = DE`. |
-
-\| **2. Create a customer with invalid data** | The RFC returns a functional error. The framework handles the exception and returns an HTTP error response. | Submit a creation request with `CountryCode = DX`. |
-
-\| **3. Update a customer successfully** | The sender publishes the message to JMS. The global router forwards it to the receiver iFlow, which updates the customer in SAP. | Submit a change request with an existing customer ID and valid data. |
-
-\| **4. Simulate a JMS submission failure** | The sender exception handler returns an HTTP error response and stores diagnostic information in the Sender Exception Data Store (`STexp\_...`). | Set `st_simulateJmsFailure = true` in the sender iFlow configuration and redeploy. |
-
-\| **5. Update a customer with a retryable error** | The framework retries the message according to its retry configuration. If all retries fail, the message is stored in the Receiver Error Data Store (`STerr\_...`). | Open the customer in transaction `BC_GLOBAL_SCUST_EDIT` and hold the lock while the change request is processed. Release it before a later retry to also test successful automatic recovery. |
-
-\| **6. Update a customer with a non-retryable error** | The framework identifies the functional error, skips automatic retries, and stores the failed message in the Receiver Error Data Store (`STerr\_...`). | Submit a change request with `CountryCode = DX`. |
-
-\| **7. Reprocess a failed message** | The recovery iFlow retrieves the failed message, republishes it to `ST_Incoming`, and removes the original Error Data Store entry after successful JMS submission. | Correct the underlying issue, configure `ST_Retry_FailedMessage` with the Data Store name and Entry ID, then redeploy or execute it as configured. |
+| Test Scenario | Expected Behavior | How to Test |
+|---|---|---|
+| **1. Create a customer successfully** | The Flight Customer is created in SAP, and the processing result is returned synchronously to the HTTP client. | Submit a customer creation request with valid data, such as `CountryCode = DE`. |
+| **2. Create a customer with invalid data** | The RFC returns a functional error. The framework handles the exception and returns an HTTP error response. | Submit a creation request with `CountryCode = DX`. |
+| **3. Update a customer successfully** | The sender publishes the message to JMS. The global router forwards it to the receiver iFlow, which updates the customer in SAP. | Submit a change request with an existing customer ID and valid data. |
+| **4. Simulate a JMS submission failure** | The sender exception handler returns an HTTP error response and stores diagnostic information in the Sender Exception Data Store (`STexp\_...`). | Set `st_simulateJmsFailure = true` in the sender iFlow configuration and redeploy. |
+| **5. Update a customer with a retryable error** | The framework retries the message according to its retry configuration. If all retries fail, the message is stored in the Receiver Error Data Store (`STerr\_...`). | Open the customer in transaction `BC_GLOBAL_SCUST_EDIT` and hold the lock while the change request is processed. Release it before a later retry to also test successful automatic recovery. |
+| **6. Update a customer with a non-retryable error** | The framework identifies the functional error, skips automatic retries, and stores the failed message in the Receiver Error Data Store (`STerr\_...`). | Submit a change request with `CountryCode = DX`. |
+| **7. Reprocess a failed message** | The recovery iFlow retrieves the failed message, republishes it to `ST_Incoming`, and removes the original Error Data Store entry after successful JMS submission. | Correct the underlying issue, configure `ST_Retry_FailedMessage` with the Data Store name and Entry ID, then redeploy or execute it as configured. |
 
 ### Sample Request Payloads
 **1. Create a Flight Customer (Synchronous)**
@@ -315,15 +307,10 @@ HTTP Method: `POST`
 Endpoint: `/http/if0000/httpclient/create-customer`
 
 ```xml
-
 <FlightCustomerCreate>
-
     <Name>Test 123</Name>
-
     <CountryCode>DE</CountryCode>
-
 </FlightCustomerCreate>
-
 ```
 
 **2. Update a Flight Customer (Asynchronous)**
@@ -333,40 +320,26 @@ HTTP Method: `POST`
 Endpoint: `/http/if0000/httpclient/change-customer`
 
 ```xml
-
 <FlightCustomerChange>
-
     <ID>00000001</ID>
-
     <Name>Test 234</Name>
-
     <CountryCode>DE</CountryCode>
-
 </FlightCustomerChange>
-
 ```
 
 Replace `00000001` with an existing Flight Customer ID in your SAP backend.
 
 ### Monitoring and Verification
 After executing the tests, use SAP Cloud Integration monitoring to verify the results:
-
 - **Message Processing:** Check message processing status, application message ID, custom status, and error details.
-
 - **Sender Exception Data Stores (`STexp\_...`):** Inspect diagnostic information for failed synchronous requests or asynchronous message submissions.
-
 - **Receiver Error Data Stores (`STerr\_...`):** Identify unresolved receiver errors requiring investigation or manual recovery.
-
 - **SAP Backend:** Verify whether the Flight Customer was created or updated successfully.
 
 **Important Notes:**
-
 - A message with processing status `Completed` may still have a custom status such as `ST_SenderException` or `ST_ReceiverError`, indicating that the exception was handled by the framework.
-
 - A successful asynchronous HTTP response confirms JMS handover, not successful backend processing.
-
 - Retryable errors are retried according to the configured retry policy. Non-retryable errors are persisted without automatic retry.
-
 - The recovery iFlow republishes failed messages for reprocessing. Successful JMS submission does not guarantee successful processing in SAP.
 
 ## 8. Next Steps

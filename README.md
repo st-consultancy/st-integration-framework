@@ -28,7 +28,7 @@ Download and import the packages into your SAP Cloud Integration tenant.
 ## Documentation
 
 - **[Getting Started](docs/getting-started.md)** — Installation, configuration, integration scenarios, error handling, and testing examples.
-- **[Naming Conventions](docs/Naming_Convention.md)** — Standardized naming conventions for integration packages, iFlows, endpoints, JMS queues, Data Stores, and framework components.
+- **[Naming Conventions](docs/naming-convention.md)** — Standardized naming conventions for integration packages, iFlows, endpoints, JMS queues, Data Stores, and framework components.
 
 For questions, bug reports, or feature requests, please use [GitHub Issues](https://github.com/st-consultancy/st-integration-framework/issues).
 

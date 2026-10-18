@@ -24,12 +24,16 @@ For synchronous interfaces, sender and receiver iFlows communicate directly thro
 
 ![Asynchronous Integration Architecutre](docs/images/ST_IntegrationArchitecture_sync.png)
 
-## Download and installation
-1. Open the repository's [Releases](../../releases) page.
-2. Download `ST_Integration_Accelerators.zip` from the desired release.
-3. In SAP Cloud Integration, import the package using the available package import functionality.
-4. Review the imported artifacts and configure required endpoints, credentials, queues, parameters, and authorizations for your landscape.
-5. Deploy only the components required for your scenario and test them before production use.
+## Download
+Download the latest release of ST Integration Framework:
+
+[**Download Latest Release**](https://github.com/st-consultancy/st-integration-framework/releases/latest)
+
+The release includes import-ready SAP Cloud Integration packages:
+- ST | Integration Accelerators
+- PI0000 | HttpClient | Customer (Getting Started)
+
+See the documentation for installation and configuration.
 
 > **Note:** The downloadable ZIP is the authoritative distribution of the iFlows and Groovy scripts. There is no separate `scripts/` or `src/` directory in this repository. Release availability and contents are documented on the Releases page.
 

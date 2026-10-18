@@ -25,9 +25,7 @@ For synchronous interfaces, sender and receiver iFlows communicate directly thro
 ![Asynchronous Integration Architecutre](docs/images/ST_IntegrationArchitecture_sync.png)
 
 ## Download
-Download the latest release of ST Integration Framework:
-
-[**Download Latest Release**](https://github.com/st-consultancy/st-integration-framework/releases/latest)
+Download the latest release of ST Integration Framework: [**Download Latest Release**](https://github.com/st-consultancy/st-integration-framework/releases/latest)
 
 The release includes import-ready SAP Cloud Integration packages:
 - ST | Integration Accelerators

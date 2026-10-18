@@ -199,11 +199,11 @@ Use the `st_` prefix for framework-specific message headers and exchange propert
 | `st_mainFlow` | Identifies the ProcessDirect endpoint for receiver routing. |
 | `st_autoRetry` | Controls whether automatic retry is enabled for a processing error. |
 | `st_maxRetry` | Defines the maximum number of retry attempts. |
-| `st_retryCount` | Tracks the number of retries performed. |
 | `st_errorMessage` | Contains the error message for monitoring and troubleshooting. |
 | `st_errorDetails` | Provides diagnostic information or references to persisted error details. |
 | `st_errorDataStoreName` | Identifies the receiver Error Data Store. |
 | `st_errorDataStoreEntryID` | Identifies a failed-message entry for recovery. |
+| `st_exceptionDataStore` | Identifies the sender Exception Data Store. |
 | `st_logPayload` | Controls payload logging behavior. |
 | `st_idempotencyRequestId` | Identifies a request for idempotent processing. |
 | `st_idempotencyFirstSent` | Records the initial submission time for idempotency handling. |

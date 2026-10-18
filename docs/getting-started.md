@@ -61,6 +61,7 @@ The exception-handling process also includes a **fallback mechanism (e5)** to re
 5. **Map BAPI to XML:** Transforms the SAP response into the XML format returned to the sender iFlow.
 
 **Error Handling**
+
 The receiver iFlow distinguishes between technical exceptions and functional errors:
 - **Technical exceptions:** RFC connectivity failures, timeouts, or other runtime exceptions propagate to the synchronous sender iFlow.
 - **Functional errors:** The BAPI return validation step checks for application-level errors and can raise an exception when customer creation fails.
@@ -79,6 +80,7 @@ In both cases, the sender iFlow handles the propagated exception through the fra
 4. **Set Response Header:** Prepares the HTTP response headers to acknowledge successful message submission.
 
 **Standardized Sender Exception Handling**
+
 If an exception occurs during message reception or JMS publishing, the iFlow invokes the reusable sender exception-handling process:
 - **e1. Prepare Error Payload:** Sets the target exception data store `st_exceptionDataStore`, collects exception details and prepares the error payload.
 - **e2. Add Custom Headers:** Adds relevant metadata for monitoring and troubleshooting.
@@ -101,6 +103,7 @@ The exception-handling process also includes a **fallback mechanism (e5)** to re
 4. **Handle RFC Response:** Evaluates the RFC response and handles application-level errors that may not trigger a technical exception.
 
 **Standardized Receiver Error Handling**
+
 Unlike the synchronous scenario, asynchronous processing does not return backend errors directly to the original HTTP client. Instead, the framework handles processing failures through the reusable `ST_Router_SAPS4H` integration flow.
 
 Depending on the error type and framework configuration:
@@ -124,33 +127,75 @@ One of the key design principles of ST Integration Framework is the distinction 
 | Message recovery       | Investigation-focused                               | Supports reprocessing                      |
 
 ### Sender Exception Handling
-Sender exceptions occur when a request cannot be processed successfully during its initial communication flow.
+Sender exceptions occur when a request cannot be processed successfully during synchronous processing or asynchronous message submission.
 
-The framework captures relevant error details and can persist exception information in a Data Store using the `STexp_` prefix.
+The ST Integration Framework provides standardized exception handling to capture error details, return a meaningful HTTP response, and persist diagnostic information in an Exception Data Store (`STexp_...`) for troubleshooting.
 
-These entries are intended primarily for troubleshooting and investigation.
+The following examples demonstrate sender exception handling in both synchronous and asynchronous integrations.
+
+#### Example 1: Synchronous Customer Creation
+In `IF0000_Sender_HttpClient_createCustomerSync`, an exception is triggered when the ProcessDirect receiver endpoint is unavailable.
+
+![Synchronous Sender Exception Handling](images/sync-sender-exception.png)
+
+#### Example 2: Asynchronous Customer Update
+In `IF0000_Sender_HttpClient_changeCustomerAsync`, a simulated JMS persistence failure demonstrates how the framework handles exceptions during asynchronous message submission.
+
+![Asynchronous Sender Exception Handling](images/async-sender-exception.png)
+
+#### How to Investigate a Sender Exception
+Both examples follow the same troubleshooting process:
+1. **Check the HTTP response:** The framework returns an appropriate HTTP error code (such as `500` or `503`), an error message, and a `message_id`.
+2. **Find the message in Integration Suite:** Search for the `message_id` in Message Processing monitoring. The message may show **Completed**, with the custom status `ST_SenderException`, because the exception was handled by the framework.
+3. **Locate the Exception Data Store:** Open the message properties and find the `st_errorDetails` custom header, which identifies the Data Store name and Entry ID.
+4. **Inspect the diagnostic payload:** Open the corresponding Data Store entry to examine the original request payload, available response payload, exception message, and stack trace.
+
+The `st_errorMessage` custom header also provides a quick summary of the exception directly in Message Processing monitoring.
+
+**Important:** A message with processing status **Completed** does not necessarily indicate successful business processing. Always check the custom status and error details.
+
+Exception Data Store entries (`STexp_...`) are intended primarily for **investigation and troubleshooting**, not automatic message reprocessing. Receiver errors requiring retry or recovery are handled separately through the framework's receiver error-handling mechanism.
 
 ### Receiver Error Handling
 Receiver errors occur when an asynchronous message cannot be processed successfully by the target system.
 
-Depending on the configuration and error type, the framework can retry processing automatically.
+The ST Integration Framework provides standardized receiver error handling, including configurable automatic retries, error persistence, and manual message recovery.
 
-Messages requiring investigation or manual recovery can be stored in the Error Data Store using the `STerr_` prefix.
+When automatic retries are exhausted, or an error requires manual intervention, the failed message is stored in a **Receiver Error Data Store (`STerr_...`)** for investigation and reprocessing.
 
-## 5. Failed-Message Recovery
-The accelerator package provides a reusable recovery iFlow:
+![Receiver Error Handling](images/receiver-error-handling.png)
 
-**`ST_Retry_FailedMessage`**
-This iFlow allows developers or operators to reprocess a previously failed message without requiring the commercial ST Integration Toolkit.
+#### Investigating Receiver Errors
 
-The recovery process is:
-1. Identify the failed message in the Error Data Store.
-2. Configure `st_errorDataStoreName` and `st_errorDataStoreEntryID`.
-3. Execute `ST_Retry_FailedMessage`.
-4. The iFlow retrieves the stored message and republishes it to `ST_Incoming`.
-5. `ST_Router_Incoming` dispatches the message to the appropriate receiver using `st_mainFlow`.
+There are two ways to investigate receiver errors in SAP Cloud Integration:
 
-Successful republication to JMS does not necessarily mean that backend processing has completed successfully.
+**1. Error Data Store — Outstanding Action Points (Recommended)**
+The Receiver Error Data Stores (`STerr_...`) provide a list of failed messages requiring attention.
+
+Each entry contains:
+- **Original Message Payload:** The failed business message, which can be inspected and corrected if necessary.
+- **Error Details:** The exception message describing the processing failure.
+- **Message Context:** Headers containing sender, receiver, message type, application ID, and routing information.
+- **Retry Information:** Headers such as `st_retryCount` and `st_maxRetry`, indicating how many retries have been attempted.
+- **Recovery Information:** The Data Store name, Entry ID, and `st_mainFlow` required for message reprocessing.
+
+These entries serve as **action points** for support teams. Once an issue has been resolved and the message successfully reprocessed, the corresponding entry can be removed from the Error Data Store.
+
+**2. Message Monitoring — Historical Error Logs**
+Receiver errors can also be identified in **Message Processing Monitoring** by filtering on: `Custom Status = ST_ReceiverError`
+
+The monitoring records provide additional information, including message IDs, correlation IDs, error messages, and references to the Error Data Store.
+
+However, Message Monitoring should primarily be used for **troubleshooting and historical analysis**, as it may also contain receiver errors that have already been corrected and reprocessed.
+
+#### Manual Message Recovery
+After investigating and correcting the underlying issue, failed messages can be reprocessed using the `ST_Retry_FailedMessage` iFlow.
+
+The iFlow retrieves the failed message using its Data Store name and Entry ID, republishes it to the ST_Incoming JMS queue, and removes the original entry from the Error Data Store after successful JMS submission.
+
+The framework uses the preserved st_mainFlow header to route the message to the appropriate receiver iFlow for reprocessing.
+
+**Important**: Successful republication to JMS does not guarantee successful backend processing. If the message fails again, the framework's receiver error-handling mechanism will handle the failure according to its configured retry and error persistence rules.
 
 ## 6. Prerequisites
 Before deploying the examples, ensure the following are available:

@@ -19,14 +19,6 @@ The examples use SAP Flight Customer RFC function modules to keep the business l
 
 The synchronous scenario demonstrates how to separate inbound communication from backend processing while maintaining a single request-response interaction.
 
-**Key features demonstrated:**
-- HTTPS sender adapter
-- Synchronous ProcessDirect communication
-- Separation of sender and receiver iFlows
-- RFC receiver adapter
-- Standardized sender exception handling
-- Synchronous response propagation
-
 ### Scenario 2: Asynchronous Customer Update
 
 ![PI0000 Asynchronous Integration Architecutre](images/PI0000_architecture_AsynchronousCustomerChange.png)
@@ -35,80 +27,90 @@ The asynchronous scenario decouples message reception from backend processing.
 
 Once a message is successfully handed over to JMS, the sender can acknowledge the request without waiting for SAP backend processing to complete.
 
-**Key features demonstrated:**
-- HTTPS-to-JMS asynchronous integration
-- Reliable message buffering
-- Reusable global message routing
-- Dynamic receiver dispatching using `st_mainFlow`
-- Separation of sender and receiver processing
-- Standardized receiver error handling
-- Automatic retry and failed-message persistence
-- Manual message recovery
-
 ## 3. Integration Flow Reference
 
 ### IF0000_Sender_HttpClient_createCustomerSync
-**Purpose:** Receive synchronous customer creation requests.
+**Purpose:** Receives synchronous customer creation requests via HTTPS and forwards them to the receiver iFlow using ProcessDirect.
 
-This iFlow exposes an HTTPS endpoint to external applications.
+![Synchronous Customer Creation - Sender iFlow](images/IF0000_Sender_HttpClient_createCustomerSync.png)
 
-It forwards the request to the receiver iFlow using ProcessDirect and waits for the processing result.
+**Processing Steps**
+1. **Assign Headers:** Initializes the framework headers and properties required for message processing.
+2. **Call Receiver iFlow:** Invokes `IF0000_Receiver_SAPS4H_createFlightCustomer` synchronously using ProcessDirect.
+3. **Set Response Header:** Prepares the HTTP response headers before returning the processing result to the client.
 
-If an exception occurs during processing, standardized sender exception handling captures the error information and prepares the HTTP error response.
+**Standardized Sender Exception Handling**
+If an exception occurs, the iFlow invokes the reusable sender exception-handling process, which performs the following steps:
+- **e1. Prepare Error Log:** Sets the target exception data store `st_exceptionDataStore` and collects exception details for troubleshooting.
+- **e2. Add Custom Headers:** Adds relevant metadata for monitoring and investigation.
+- **e3. Save to Data Store:** Persists exception details in the sender exception Data Store (`STexp_...`).
+- **e4. Set Sender Response:** Prepares an appropriate error response for the HTTP client.
 
-**Demonstrates:**
-- HTTPS request-response processing
-- ProcessDirect communication
-- Sender-side exception handling
-- Separation of communication and business processing
+The exception-handling process also includes a **fallback mechanism (e5)** to return an error response if the exception handler itself fails.
 
 ### IF0000_Receiver_SAPS4H_createFlightCustomer
-**Purpose:** Create a Flight Customer in SAP using RFC.
+**Purpose:** Creates a Flight Customer in SAP using RFC and returns the processing result to the sender iFlow synchronously.
 
-The receiver iFlow accepts requests through ProcessDirect, prepares the backend request, and invokes the SAP Flight Customer RFC function module.
+![Synchronous Customer Creation - Receiver iFlow](images/IF0000_Receiver_SAPS4H_createFlightCustomer.png)
 
-The processing result is returned to the sender iFlow.
+**Processing Steps**
+1. **Assign Headers:** Initializes the required headers for message processing.
+2. **Map XML to RFC:** Transforms the incoming customer XML into the request structure expected by the SAP RFC function module.
+3. **Call RFC:** Invokes the SAP backend through the RFC receiver adapter to create the Flight Customer.
+4. **Validate BAPI Return:** Evaluates the BAPI return messages to identify functional errors that may not trigger an RFC adapter exception.
+5. **Map BAPI to XML:** Transforms the SAP response into the XML format returned to the sender iFlow.
 
-Technical exceptions propagate back to the sender, allowing the synchronous request to be handled consistently.
+**Error Handling**
+The receiver iFlow distinguishes between technical exceptions and functional errors:
+- **Technical exceptions:** RFC connectivity failures, timeouts, or other runtime exceptions propagate to the synchronous sender iFlow.
+- **Functional errors:** The BAPI return validation step checks for application-level errors and can raise an exception when customer creation fails.
 
-**Demonstrates:**
-- Reusable receiver iFlow design
-- SAP RFC integration
-- Backend request and response handling
-- Exception propagation in synchronous processing
+In both cases, the sender iFlow handles the propagated exception through the framework's standardized sender exception-handling process.
 
 ### IF0000_Sender_HttpClient_changeCustomerAsync
-**Purpose:** Accept asynchronous customer update requests.
+**Purpose:** Receives asynchronous customer update requests via HTTPS and publishes them to the `ST_SAPS4H` JMS queue for processing by the receiver iFlow.
 
-The sender iFlow receives an HTTPS request and prepares the message for asynchronous processing.
+![Asynchronous Customer Update - Sender iFlow](images/IF0000_Sender_HttpClient_changeCustomerAsync.png)
 
-It sets the framework routing information, including `st_mainFlow`, and publishes the message to the `ST_Incoming` JMS queue.
+**Processing Steps**
+1. **Assign Headers:** Initializes the framework headers and properties, including `st_mainFlow`, which identifies the receiver iFlow to be invoked by the global router.
+2. **Simulate JMS Failure:** Provides a testing mechanism to simulate a JMS failure and demonstrate standardized sender exception handling.
+3. **Save to Queue:** Publishes the customer update message to the `ST_SAPS4H` JMS queue for asynchronous processing.
+4. **Set Response Header:** Prepares the HTTP response headers to acknowledge successful message submission.
 
-After successful JMS handover, the HTTP request can complete independently of backend processing.
+**Standardized Sender Exception Handling**
+If an exception occurs during message reception or JMS publishing, the iFlow invokes the reusable sender exception-handling process:
+- **e1. Prepare Error Payload:** Sets the target exception data store `st_exceptionDataStore`, collects exception details and prepares the error payload.
+- **e2. Add Custom Headers:** Adds relevant metadata for monitoring and troubleshooting.
+- **e3. Save to Data Store:** Persists exception details in the sender exception Data Store (`STexp_...`) for investigation.
+- **e4. Set Sender Response:** Prepares an appropriate HTTP error response.
 
-**Demonstrates:**
-- Asynchronous message acceptance
-- JMS-based decoupling
-- Dynamic routing configuration
-- Standardized sender exception handling
-- Separation of message reception and processing
+The exception-handling process also includes a **fallback mechanism (e5)** to return an error response if the exception handler itself fails.
+
+**Important:** A successful HTTP response confirms that the message has been handed over to JMS. It does not indicate that the customer update has been completed successfully in SAP. Backend processing and receiver error handling are performed independently by `ST_Router_SAPS4H` and the receiver iFlow.
 
 ### IF0000_Receiver_SAPS4H_changeFlightCustomer
-**Purpose:** Update an existing Flight Customer in SAP.
+**Purpose:** Processes asynchronous customer update requests received from `ST_Router_SAPS4H` via ProcessDirect and updates Flight Customer data in SAP using RFC.
 
-The receiver iFlow is invoked by the global router through ProcessDirect.
+![Asynchronous Customer Update - Receiver iFlow](images/IF0000_Receiver_SAPS4H_changeFlightCustomer.png)
 
-It calls the SAP backend using RFC and handles the processing result.
+**Processing Steps**
+1. **Set Headers & Properties:** Initializes the framework headers and properties required for message processing and error handling.
+2. **Map XML to RFC:** Transforms the incoming customer XML into the request structure expected by the SAP RFC function module.
+3. **Call S/4HANA:** Invokes the SAP backend through the RFC receiver adapter to update the Flight Customer.
+4. **Handle RFC Response:** Evaluates the RFC response and handles application-level errors that may not trigger a technical exception.
 
-Unlike synchronous processing, backend failures do not need to be returned to the original HTTP client. Instead, the framework can apply its standardized receiver error-handling mechanisms.
+**Standardized Receiver Error Handling**
+Unlike the synchronous scenario, asynchronous processing does not return backend errors directly to the original HTTP client. Instead, the framework handles processing failures through the reusable `ST_Router_SAPS4H` integration flow.
 
-**Demonstrates:**
-- Asynchronous receiver processing
-- SAP RFC integration
-- Standardized receiver error handling
-- Configurable automatic retry
-- Error Data Store persistence
-- Failed-message recovery
+Depending on the error type and framework configuration:
+- **Automatic Retry:** Transient errors can trigger configurable retry processing.
+- **Error Persistence:** Failed messages can be stored in the receiver Error Data Store (`STerr_...`) for investigation and recovery.
+- **Manual Recovery:** Failed messages can be reprocessed using the `ST_Retry_FailedMessage` iFlow.
+
+This separation allows receiver iFlows to focus on backend communication and business processing while the framework provides standardized error handling.
+
+**Important:** The receiver iFlow does not implement its own JMS retry mechanism. Retry and error persistence are managed by the reusable routing framework, allowing consistent error handling across multiple receiver iFlows.
 
 ## 4. Understanding Error Handling
 One of the key design principles of ST Integration Framework is the distinction between **sender exceptions** and **receiver errors**.

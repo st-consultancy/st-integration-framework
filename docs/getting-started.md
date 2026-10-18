@@ -3,8 +3,6 @@
 ## 1. Overview
 The **PI0000 | HttpClient | Customer** package provides practical examples of building integrations using the ST Integration Framework on SAP Cloud Integration.
 
-**Standardized by Design. Reliable by Default.**
-
 The package demonstrates two common integration patterns:
 - **Synchronous Customer Creation:** An HTTP client sends a request to create a Flight Customer in SAP and receives the processing result immediately.
 - **Asynchronous Customer Update:** An HTTP client submits a customer change request, which is processed asynchronously using JMS and reusable routing components.
